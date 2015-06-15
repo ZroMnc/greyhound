@@ -1,4 +1,4 @@
-# panda
+# Greyhound
 Little Helper Script for work to manage tokens
 
 ```bash
