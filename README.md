@@ -8,5 +8,10 @@ Usage: ./token.sh [-ha] [-t TEAMNAME] [-u USERNAME] [-ir TOKEN]
     -t  TEAMNAME    Retrieves listing from team api
     -u  USERNAME    Get specific user info
     -i  TOKEN       Poll the Tokeninfo endpoint
-    -r  TOKEN       Revoke your token\n"
+    -r  TOKEN       Revoke your token
+```
+
+Add this to make it available
+```bash
+echo "export PATH=${PATH}:~/<workspace>/greyhound" >> ~/.bashrc
 ```
