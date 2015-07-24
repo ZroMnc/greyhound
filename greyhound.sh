@@ -4,11 +4,11 @@ set -e
 #VARS
 teamname=""
 username=""
-token=""
-team_url="https://teams.auth.zalando.com/teams"
+team_url="https://teams.auth.zalando.com/api"
 user_url="https://users.auth.zalando.com/employees"
 token_url="https://token.auth.zalando.com/access_token"
 tokeninfo="https://auth.zalando.com/oauth2/tokeninfo?access_token"
+
 APPJSON='{"application_username":"XXXXXXXXXXXXXX","application_password":"XXXXXXXXXXXXXXXXX"}'
 CLIENTJSON='{"client_id":"XXXXXXXXXXXXXXX","client_secret":"XXXXXXXXXXXXXXXXXXXXXX"}'
 
@@ -35,7 +35,7 @@ get_service_token () {
 
 
 show_help() {
-printf "Usage: ./token.sh [-ha] [-t TEAMNAME] [-u USERNAME] [-ir TOKEN]
+printf "Usage: ./token.sh [-har] [-t TEAMNAME] [-u USERNAME] [-i TOKEN]
     Token Helper
     -a              Get an access_token and add to clipboard (OSX Only)
     -s              Get an access_token from service realm
@@ -47,16 +47,30 @@ printf "Usage: ./token.sh [-ha] [-t TEAMNAME] [-u USERNAME] [-ir TOKEN]
 
 #Getting credentials
 login() {
+    if [[ ! -z $token ]]; then
+        curl -s "$tokeninfo=$token" | jq .
+        echo $token | pbcopy
+    else
+        #Retrieve Access Token
         read -p "Enter Username : " uname
         read -s -p "Enter Password : " pass
         base=$(echo -n "$uname:$pass" | base64)
+        export token=$(curl -s --header  "Authorization: Basic $base" $token_url)
+        exec "$@"
+        echo $token | pbcopy
+    fi
+}
 
-        #Retrieve Access Token
-        token=$(curl -s --header  "Authorization: Basic $base" $token_url)
+revoke() {
+    read -p "Enter Username : " uname
+    read -s -p "Enter Password : " pass
+    base=$(echo -n "$uname:$pass" | base64)
+    curl -s --request DELETE --header "Authorization: Basic $base" "https://token.auth.zalando.com/access_token/employees/$uname" | jq .
+    printf "\n[+]Done\n"
 }
 
 OPTIND=1
-while getopts "hast:u:i:r:" opt; do
+while getopts "hast:u:i:r" opt; do
     case "$opt" in
         h)
             show_help
@@ -65,7 +79,6 @@ while getopts "hast:u:i:r:" opt; do
         a)
             login
             printf "\nToken added to clipboard\n"
-            echo $token | pbcopy
             exit 1
             ;;
         s)
@@ -74,7 +87,7 @@ while getopts "hast:u:i:r:" opt; do
             ;;
         t)  teamname=$OPTARG
             login
-            curl -s --header "Authorization: Bearer $token" "$team_url/$teamname" | jq .
+            curl -s --header "Authorization: Bearer $token" "$team_url/teams/$teamname" | jq .
             exit 2
             ;;
         u)  username=$OPTARG
@@ -88,8 +101,7 @@ while getopts "hast:u:i:r:" opt; do
             exit 4
             ;;
         r)
-            token=$OPTARG
-            curl -s --header "Authorization: Bearer $token" "https://token.auth.zalando.com/invalidate/employees/$token"
+            revoke
             exit 5
             ;;
     esac
