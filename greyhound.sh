@@ -12,6 +12,11 @@ tokeninfo="https://auth.zalando.com/oauth2/tokeninfo?access_token"
 APPJSON='{"application_username":"XXXXXXXXXXXXXX","application_password":"XXXXXXXXXXXXXXXXX"}'
 CLIENTJSON='{"client_id":"XXXXXXXXXXXXXXX","client_secret":"XXXXXXXXXXXXXXXXXXXXXX"}'
 
+#MESSAGES
+TOKEN_STILL_VALID_MSG="Your Token is still valid"
+TOKEN_INVALID_MSG="Your Token is invalid - requesting a new"
+INVALID_REQUEST_ERROR='"invalid_request"'
+
 json_decode () {
     echo -n "$1" | jq -r ."$2"
 }
@@ -47,26 +52,47 @@ printf "Usage: ./token.sh [-har] [-t TEAMNAME] [-u USERNAME] [-i TOKEN]
 
 #Getting credentials
 login() {
-    if [[ ! -z $token ]]; then
-        curl -s "$tokeninfo=$token" | jq .
-        echo $token | pbcopy
+    DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+    token=$( cat $DIR/.token )
+    RESPONSE=$(curl -s "$tokeninfo=$token")
+    VAR1=$( echo "$RESPONSE" | jq .'error')
+
+    if [ -e $DIR/.token ]; then
+        if [ "$VAR1" == "$INVALID_REQUEST_ERROR" ]; then
+            printf "$TOKEN_INVALID_MSG\n"
+            getToken
+        else
+            printf "$TOKEN_STILL_VALID_MSG\n"
+        fi
     else
         #Retrieve Access Token
+        getToken
+    fi
+}
+
+getToken() {
         read -p "Enter Username : " uname
         read -s -p "Enter Password : " pass
         base=$(echo -n "$uname:$pass" | base64)
-        export token=$(curl -s --header  "Authorization: Basic $base" $token_url)
-        exec "$@"
-        echo $token | pbcopy
-    fi
-}
+        token=$(curl -s --header  "Authorization: Basic $base" $token_url)
+        VAR2=$( echo "$token" | jq .'code' )
+        echo $VAR2
+        if [ "$VAR2" == "401" ]; then
+            printf "Unauthorized\n"
+            exit 1
+        else
+            echo $token > $DIR/.token
+            echo $token | pbcopy
+            printf "\n[+] Token added to clipboard\n"
+        fi
+    }
 
 revoke() {
     read -p "Enter Username : " uname
     read -s -p "Enter Password : " pass
     base=$(echo -n "$uname:$pass" | base64)
     curl -s --request DELETE --header "Authorization: Basic $base" "https://token.auth.zalando.com/access_token/employees/$uname" | jq .
-    printf "\n[+]Done\n"
+    printf "\n[+] Done\n"
 }
 
 OPTIND=1
@@ -78,7 +104,6 @@ while getopts "hast:u:i:r" opt; do
             ;;
         a)
             login
-            printf "\nToken added to clipboard\n"
             exit 1
             ;;
         s)
