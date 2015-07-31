@@ -9,6 +9,7 @@ user_url="https://users.auth.zalando.com/employees"
 token_url="https://token.auth.zalando.com/access_token?json=true"
 tokeninfo="https://auth.zalando.com/oauth2/tokeninfo?access_token"
 
+OAUTH_TOKEN=""
 APPJSON='{"application_username":"XXXXXXXXXXXXXX","application_password":"XXXXXXXXXXXXXXXXX"}'
 CLIENTJSON='{"client_id":"XXXXXXXXXXXXXXX","client_secret":"XXXXXXXXXXXXXXXXXXXXXX"}'
 
@@ -58,54 +59,48 @@ login() {
     DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
     if [ -f $DIR/.token ]; then
 #        echo 'Here'
-        token=$( cat $DIR/.token )
-        RESPONSE=$(curl -s "$tokeninfo=$token")
-        VAR1=$( echo "$RESPONSE" | jq .'error')
-        if [ "$VAR1" == "$INVALID_REQUEST_ERROR" ]; then
-            echo 'Blubb'
+        OAUTH_TOKEN=$( cat $DIR/.token )
+        RESPONSE=$(curl -s "$tokeninfo=$OAUTH_TOKEN")
+        ERROR=$( echo "$RESPONSE" | jq .'error')
+        if [ "$ERROR" == "$INVALID_REQUEST_ERROR" ]; then
             printf "$TOKEN_INVALID_MSG\n"
             getToken
         else
             printf "$TOKEN_STILL_VALID_MSG\n"
-            getToken
+            exportToken
+            exit
         fi
     else
         echo 'There'
+        # Creates an empty file
         echo "" > .token
         getToken
     fi
-
-#    if [ -e $DIR/.token ]; then
-#            else
-#        #Retrieve Access Token
-#    fi
 }
 
 getToken() {
         read -p "Enter Username : " uname
         read -s -p "Enter Password : " pass
         base=$(echo -n "$uname:$pass" | base64)
-        printf "BASE $base \n"
         token=$(curl -s --header  "Authorization: Basic $base" $token_url)
-       # echo $token
         # Print either an access token or the error code
         VAR2=$( echo "$token" | jq -r '[.access_token // .code]' | tr -d '[]' )
-        echo $VAR2
-        printf "$VAR2\n"
         if [[ "$VAR2" == *$ERROR_401* ]]; then
             printf "Unauthorized - Username or Password Error\n"
-#            echo $ERROR_401
-#            echo $VAR2
             exit 1
         else
             echo $VAR2 | tr -d '""' > $DIR/.token
-#            echo 'Beer'
-            echo $VAR2 | pbcopy
-            export TOKEN=$( cat .token )
-
-#            printf "\n[+] Token added to clipboard\n"
+            OAUTH_TOKEN=$( echo $VAR2 | tr -d '""' )
+            exportToken
         fi
-    }
+}
+
+exportToken() {
+    exportValue=$( echo $OAUTH_TOKEN | tr -d '""' )
+    echo "#!/bin/bash\nexport TOKEN=$exportValue" > token.sh
+    . token.sh
+    rm token.sh
+}
 
 revoke() {
     read -p "Enter Username : " uname
