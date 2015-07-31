@@ -53,21 +53,28 @@ printf "Usage: ./token.sh [-har] [-t TEAMNAME] [-u USERNAME] [-i TOKEN]
 #Getting credentials
 login() {
     DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-    token=$( cat $DIR/.token )
-    RESPONSE=$(curl -s "$tokeninfo=$token")
-    VAR1=$( echo "$RESPONSE" | jq .'error')
-
-    if [ -e $DIR/.token ]; then
+    if [ -f $DIR/.token ]; then
+        echo 'Here'
+        token=$( cat $DIR/.token )
+        RESPONSE=$(curl -s "$tokeninfo=$token")
+        VAR1=$( echo "$RESPONSE" | jq .'error')
         if [ "$VAR1" == "$INVALID_REQUEST_ERROR" ]; then
             printf "$TOKEN_INVALID_MSG\n"
             getToken
         else
             printf "$TOKEN_STILL_VALID_MSG\n"
+            getToken
         fi
     else
-        #Retrieve Access Token
+        echo 'There'
+        echo "" > .token
         getToken
     fi
+
+#    if [ -e $DIR/.token ]; then
+#            else
+#        #Retrieve Access Token
+#    fi
 }
 
 getToken() {
@@ -76,7 +83,6 @@ getToken() {
         base=$(echo -n "$uname:$pass" | base64)
         token=$(curl -s --header  "Authorization: Basic $base" $token_url)
         VAR2=$( echo "$token" | jq .'code' )
-        echo $VAR2
         if [ "$VAR2" == "401" ]; then
             printf "Unauthorized\n"
             exit 1
