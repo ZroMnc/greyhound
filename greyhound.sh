@@ -1,9 +1,12 @@
 #!/bin/bash
-set -e
+set -euo pipefail
+IFS=$'\n\t'
+
 
 #VARS
 teamname=""
 username=""
+token=""
 team_url="https://teams.auth.zalando.com/api"
 user_url="https://users.auth.zalando.com/employees"
 token_url="https://token.auth.zalando.com/access_token?json=true"
@@ -67,11 +70,10 @@ login() {
             getToken
         else
             printf "$TOKEN_STILL_VALID_MSG\n"
+            token=$OAUTH_TOKEN
             exportToken
-            exit
         fi
     else
-        echo 'There'
         # Creates an empty file
         echo "" > .token
         getToken
