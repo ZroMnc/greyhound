@@ -7,14 +7,14 @@ IFS=$'\n\t'
 teamname=""
 username=""
 token=""
+OAUTH_TOKEN=""
 team_url="https://teams.auth.zalando.com/api"
 user_url="https://users.auth.zalando.com/employees"
 token_url="https://token.auth.zalando.com/access_token?json=true"
 tokeninfo="https://auth.zalando.com/oauth2/tokeninfo?access_token"
 
-OAUTH_TOKEN=""
-APPJSON='{"application_username":"XXXXXXXXXXXXXX","application_password":"XXXXXXXXXXXXXXXXX"}'
-CLIENTJSON='{"client_id":"XXXXXXXXXXXXXXX","client_secret":"XXXXXXXXXXXXXXXXXXXXXX"}'
+#APPJSON=$(cat user.json)
+#CLIENTJSON=$(cat client.json)
 
 #MESSAGES
 TOKEN_STILL_VALID_MSG="Your Token is still valid"
@@ -61,8 +61,7 @@ printf "Usage: ./token.sh [-har] [-t TEAMNAME] [-u USERNAME] [-i TOKEN]
 login() {
     DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
     if [ -f $DIR/.token ]; then
-#        echo 'Here'
-        OAUTH_TOKEN=$( cat $DIR/.token )
+        OAUTH_TOKEN=$( cat $DIR/.token | awk '{gsub(/^ +| +$/,"")} {print $0 }')
         RESPONSE=$(curl -s "$tokeninfo=$OAUTH_TOKEN")
         ERROR=$( echo "$RESPONSE" | jq .'error')
         if [ "$ERROR" == "$INVALID_REQUEST_ERROR" ]; then
@@ -70,11 +69,9 @@ login() {
             getToken
         else
             printf "$TOKEN_STILL_VALID_MSG\n"
-            token=$OAUTH_TOKEN
             exportToken
         fi
     else
-        # Creates an empty file
         echo "" > .token
         getToken
     fi
@@ -91,17 +88,14 @@ getToken() {
             printf "Unauthorized - Username or Password Error\n"
             exit 1
         else
-            echo $VAR2 | tr -d '""' > $DIR/.token
-            OAUTH_TOKEN=$( echo $VAR2 | tr -d '""' )
+            OAUTH_TOKEN=$( echo $VAR2 | tr -d '""' | awk '{gsub(/^ +| +$/,"")} {print $0 }' )
             exportToken
         fi
 }
 
 exportToken() {
-    exportValue=$( echo $OAUTH_TOKEN | tr -d '""' )
-    echo "#!/bin/bash\nexport TOKEN=$exportValue" > token.sh
-    . token.sh
-    rm token.sh
+        exportValue=$( echo $OAUTH_TOKEN | tr -d '""' > $DIR/.token)
+        token=$OAUTH_TOKEN
 }
 
 revoke() {
