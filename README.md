@@ -7,6 +7,7 @@ Usage: ./token.sh [-ha] [-t TEAMNAME] [-u USERNAME] [-ir TOKEN]
     -a              Get an access_token and add to clipboard (OSX Only)
     -t  TEAMNAME    Retrieves listing from team api
     -u  USERNAME    Get specific user info
+    -q  QUERY       Search parameter for users
     -i  TOKEN       Poll the Tokeninfo endpoint
     -r  TOKEN       Revoke your token
 ```
