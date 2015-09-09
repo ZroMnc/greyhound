@@ -53,6 +53,7 @@ printf "Usage: ./token.sh [-har] [-t TEAMNAME] [-u USERNAME] [-i TOKEN]
     -s              Get an access_token from service realm
     -t  TEAMNAME    Retrieves listing from team api
     -u  USERNAME    Get specific user info
+    -p  QUERY       Search for Names (can be incomplete)
     -i  TOKEN       Poll the Tokeninfo endpoint
     -r  TOKEN       Revoke your token\n"
 }
@@ -107,7 +108,7 @@ revoke() {
 }
 
 OPTIND=1
-while getopts "hast:u:i:r" opt; do
+while getopts "hast:u:i:q:r" opt; do
     case "$opt" in
         h)
             show_help
@@ -124,21 +125,26 @@ while getopts "hast:u:i:r" opt; do
         t)  teamname=$OPTARG
             login
             curl -s --header "Authorization: Bearer $token" "$team_url/teams/$teamname" | jq .
-            exit 2
+            exit 1
             ;;
         u)  username=$OPTARG
             login
             curl -s --header "Authorization: Bearer $token" "$user_url/$username" | jq .
-            exit 3
+            exit 1
+            ;;
+        q)  query=$OPTARG
+            login
+            curl -s --header "Authorization: Bearer $token" "$user_url?sort=name&q=$query" | jq .
+            exit 1
             ;;
         i)
             token=$OPTARG
             curl -s "$tokeninfo=$token" | jq .
-            exit 4
+            exit 1
             ;;
         r)
             revoke
-            exit 5
+            exit 1
             ;;
     esac
 done
