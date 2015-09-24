@@ -48,6 +48,14 @@ get_service_token () {
 
 show_help() {
 printf "Usage: ./token.sh [-har] [-t TEAMNAME] [-u USERNAME] [-i TOKEN]
+      _____                _                           _ 
+     / ____|              | |                         | |
+    | |  __ _ __ ___ _   _| |__   ___  _   _ _ __   __| |
+    | | |_ | '__/ _ \ | | | '_ \ / _ \| | | | '_ \ / _\` |
+    | |__| | | |  __/ |_| | | | | (_) | |_| | | | | (_| |
+     \_____|_|  \___|\__. |_| |_|\___/ \__._|_| |_|\__|_|
+                     __/ |                              
+                    |___/                               
     Token Helper
     -a              Get an access_token and add to clipboard (OSX Only)
     -s              Get an access_token from service realm
