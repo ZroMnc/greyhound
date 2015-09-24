@@ -1,6 +1,6 @@
 # Greyhound
 Little Helper Script for work to manage tokens
-
+```
    _____                _                           _ 
   / ____|              | |                         | |
  | |  __ _ __ ___ _   _| |__   ___  _   _ _ __   __| |
@@ -9,6 +9,7 @@ Little Helper Script for work to manage tokens
   \_____|_|  \___|\__, |_| |_|\___/ \__,_|_| |_|\__,_|
                    __/ |                              
                   |___/                               
+```
 
 ```bash
 Usage: ./token.sh [-ha] [-t TEAMNAME] [-u USERNAME] [-ir TOKEN]
@@ -16,7 +17,7 @@ Usage: ./token.sh [-ha] [-t TEAMNAME] [-u USERNAME] [-ir TOKEN]
     -a              Get an access_token and add to clipboard (OSX Only)
     -t  TEAMNAME    Retrieves listing from team api
     -u  USERNAME    Get specific user info
-    -q  QUERY       Poll user details
+    -q  QUERY       Search parameter for users
     -i  TOKEN       Poll the Tokeninfo endpoint
     -r  TOKEN       Revoke your token
 ```
