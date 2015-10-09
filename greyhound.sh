@@ -63,7 +63,8 @@ printf "Usage: ./token.sh [-har] [-t TEAMNAME] [-u USERNAME] [-i TOKEN] [-n AWS-
     -u  USERNAME    Get specific user info
     -p  QUERY       Search for Names (can be incomplete)
     -i  TOKEN       Poll the Tokeninfo endpoint
-    -r  TOKEN       Revoke your token
+    -p IP          Returns Team-Name from given AWS NAT instance
+   -r  TOKEN       Revoke your token
     -n  AWS-ID      Pulls information about a given aws account\n"
 }
 
@@ -117,7 +118,7 @@ revoke() {
 }
 
 OPTIND=1
-while getopts "hast:u:i:q:rn:" opt; do
+while getopts "hast:u:i:p:q:rn:" opt; do
     case "$opt" in
         h)
             show_help
@@ -149,6 +150,12 @@ while getopts "hast:u:i:q:rn:" opt; do
         i)
             token=$OPTARG
             curl -s "$tokeninfo=$token" | jq .
+            exit 1
+            ;;
+        p)
+            ipaddr=$OPTARG
+            login
+            curl -s -H "Authorization: Bearer $token" "$team_url/accounts/aws?ip=$ipaddr" | jq .
             exit 1
             ;;
         r)
