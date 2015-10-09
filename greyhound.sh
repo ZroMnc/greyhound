@@ -47,7 +47,7 @@ get_service_token () {
 
 
 show_help() {
-printf "Usage: ./token.sh [-har] [-t TEAMNAME] [-u USERNAME] [-i TOKEN]
+printf "Usage: ./token.sh [-har] [-t TEAMNAME] [-u USERNAME] [-i TOKEN] [-n AWS-ID]
       _____                _                           _ 
      / ____|              | |                         | |
     | |  __ _ __ ___ _   _| |__   ___  _   _ _ __   __| |
@@ -63,7 +63,8 @@ printf "Usage: ./token.sh [-har] [-t TEAMNAME] [-u USERNAME] [-i TOKEN]
     -u  USERNAME    Get specific user info
     -p  QUERY       Search for Names (can be incomplete)
     -i  TOKEN       Poll the Tokeninfo endpoint
-    -r  TOKEN       Revoke your token\n"
+    -r  TOKEN       Revoke your token
+    -n  AWS-ID      Pulls information about a given aws account\n"
 }
 
 #Getting credentials
@@ -116,7 +117,7 @@ revoke() {
 }
 
 OPTIND=1
-while getopts "hast:u:i:q:r" opt; do
+while getopts "hast:u:i:q:rn:" opt; do
     case "$opt" in
         h)
             show_help
@@ -152,6 +153,11 @@ while getopts "hast:u:i:q:r" opt; do
             ;;
         r)
             revoke
+            exit 1
+            ;;
+        n)  aws=$OPTARG
+            login
+            curl -s --header "Authorization: Bearer $token" "$team_url/accounts/aws/$aws" | jq .
             exit 1
             ;;
     esac
