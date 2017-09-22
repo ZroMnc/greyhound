@@ -32,19 +32,6 @@ url_encode () {
     echo -n "$1" | perl -pe 's/([^a-zA-Z0-9])/"%".sprintf("%x", ord($1))/ge'
 }
 
-get_service_token () {
-
-    APP_PASS=$( json_decode "$APPJSON" "application_password" )
-    APP_NAME=$( json_decode "$APPJSON" "application_username" )
-    CLIENT_ID=$( json_decode "$CLIENTJSON" "client_id" )
-    CLIENT_SECRET=$( json_decode "$CLIENTJSON" "client_secret" )
-    AUTH_HDR=$( echo -n "$CLIENT_ID:$CLIENT_SECRET" | base64 | tr -d ' \n' )
-    USER_ID=$( url_encode "$APP_NAME" )
-    USER_PASS=$( url_encode "$APP_PASS" )
-
-    curl -X POST --header "Authorization: Basic $AUTH_HDR" --data "grant_type=password&username=$USER_ID&password=$USER_PASS&scope=uid" "https://auth.zalando.com/oauth2/access_token?realm=/services"
-}
-
 
 show_help() {
 printf "Usage: ./token.sh [-har] [-t TEAMNAME] [-u USERNAME] [-i TOKEN] [-n AWS-ID]
@@ -57,35 +44,17 @@ printf "Usage: ./token.sh [-har] [-t TEAMNAME] [-u USERNAME] [-i TOKEN] [-n AWS-
                      __/ |                              
                     |___/                               
     Token Helper
-    -a              Get an access_token and add to clipboard (OSX Only)
-    -s              Get an access_token from service realm
     -t  TEAMNAME    Retrieves listing from team api
     -u  USERNAME    Get specific user info
     -p  QUERY       Search for Names (can be incomplete)
     -i  TOKEN       Poll the Tokeninfo endpoint
     -p IP          Returns Team-Name from given AWS NAT instance
-   -r  TOKEN       Revoke your token
     -n  AWS-ID      Pulls information about a given aws account\n"
 }
 
 #Getting credentials
 login() {
-    DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-    if [ -f $DIR/.token ]; then
-        OAUTH_TOKEN=$( cat $DIR/.token | awk '{gsub(/^ +| +$/,"")} {print $0 }')
-        RESPONSE=$(curl -s "$tokeninfo=$OAUTH_TOKEN")
-        ERROR=$( echo "$RESPONSE" | jq .'error')
-        if [ "$ERROR" == "$INVALID_REQUEST_ERROR" ]; then
-            printf "$TOKEN_INVALID_MSG\n"
-            getToken
-        else
-            printf "$TOKEN_STILL_VALID_MSG\n"
-            exportToken
-        fi
-    else
-        echo "" > .token
-        getToken
-    fi
+    exportToken
 }
 
 getToken() {
@@ -105,16 +74,7 @@ getToken() {
 }
 
 exportToken() {
-        exportValue=$( echo $OAUTH_TOKEN | tr -d '""' > $DIR/.token)
-        token=$OAUTH_TOKEN
-}
-
-revoke() {
-    read -p "Enter Username : " uname
-    read -s -p "Enter Password : " pass
-    base=$(echo -n "$uname:$pass" | base64)
-    curl -s --request DELETE --header "Authorization: Basic $base" "https://token.auth.zalando.com/access_token/employees/$uname" | jq .
-    printf "\n[+] Done\n"
+        token=`ztoken token`
 }
 
 OPTIND=1
@@ -139,7 +99,7 @@ while getopts "hast:u:i:p:q:rn:" opt; do
             ;;
         u)  username=$OPTARG
             login
-            curl -s --header "Authorization: Bearer $token" "$user_url/$username" | jq .
+            curl -s --header "Authorization: Bearer $token" "$user_url/$username" | jq 'del(.keys, .time_zone, .shell, .home, .country, .company, .first_name, .last_name, .full_name )'
             exit 1
             ;;
         q)  query=$OPTARG
@@ -156,10 +116,6 @@ while getopts "hast:u:i:p:q:rn:" opt; do
             ipaddr=$OPTARG
             login
             curl -s -H "Authorization: Bearer $token" "$team_url/accounts/aws?ip=$ipaddr" | jq .
-            exit 1
-            ;;
-        r)
-            revoke
             exit 1
             ;;
         n)  aws=$OPTARG
