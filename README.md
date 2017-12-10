@@ -29,3 +29,6 @@ Add this to make it available
 echo "export PATH=${PATH}:~/<workspace>/greyhound" >> ~/.bashrc
 alias getToken="greyhound.sh -a || TOKEN=$(cat ~/workspace/greyhound/.token) || echo $TOKEN"
 ```
+
+### NOTES
+You will need to get a session key of the zonar tooling. Simply just login and save the cookie named session.
