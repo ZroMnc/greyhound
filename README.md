@@ -1,5 +1,5 @@
 # Greyhound
-Little Helper Script for work to manage tokens
+Little Helper Script for work
 ```
    _____                _                           _ 
   / ____|              | |                         | |
@@ -13,8 +13,6 @@ Little Helper Script for work to manage tokens
 
 ```bash
 Token Helper
-    -a              Get an access_token and add to clipboard (OSX Only)
-    -s              Get an access_token from service realm
     -t  TEAMNAME    Retrieves listing from team api
     -u  USERNAME    Get specific user info
     -p  QUERY       Search for Names (can be incomplete)
@@ -27,7 +25,6 @@ Token Helper
 Add this to make it available
 ```bash
 echo "export PATH=${PATH}:~/<workspace>/greyhound" >> ~/.bashrc
-alias getToken="greyhound.sh -a || TOKEN=$(cat ~/workspace/greyhound/.token) || echo $TOKEN"
 ```
 
 ### NOTES
