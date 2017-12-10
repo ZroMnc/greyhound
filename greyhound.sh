@@ -8,10 +8,13 @@ teamname=""
 username=""
 token=""
 OAUTH_TOKEN=""
+zonarkey=""
+keypath="$HOME/keys/keys/.zonar"
 team_url="https://teams.auth.zalando.com/api"
 user_url="https://users.auth.zalando.com/employees"
 token_url="https://token.auth.zalando.com/access_token?json=true"
 tokeninfo="https://auth.zalando.com/oauth2/tokeninfo?access_token"
+zonar_url="https://zonar.zalando.net"
 
 #APPJSON=$(cat user.json)
 #CLIENTJSON=$(cat client.json)
@@ -34,7 +37,7 @@ url_encode () {
 
 
 show_help() {
-printf "Usage: ./token.sh [-har] [-t TEAMNAME] [-u USERNAME] [-i TOKEN] [-n AWS-ID]
+printf "Usage: ./greyhound.sh [-har] [-t TEAMNAME] [-u USERNAME] [-i TOKEN] [-n AWS-ID]
       _____                _                           _ 
      / ____|              | |                         | |
     | |  __ _ __ ___ _   _| |__   ___  _   _ _ __   __| |
@@ -49,7 +52,8 @@ printf "Usage: ./token.sh [-har] [-t TEAMNAME] [-u USERNAME] [-i TOKEN] [-n AWS-
     -p  QUERY       Search for Names (can be incomplete)
     -i  TOKEN       Poll the Tokeninfo endpoint
     -p IP          Returns Team-Name from given AWS NAT instance
-    -n  AWS-ID      Pulls information about a given aws account\n"
+    -n  AWS-ID      Pulls information about a given aws account
+    -z USERNAME     Poll userdata from SAP\n"
 }
 
 #Getting credentials
@@ -77,8 +81,12 @@ exportToken() {
         token=`ztoken token`
 }
 
+get_session(){
+    zonarkey=`cat $keypath`
+}
+
 OPTIND=1
-while getopts "hast:u:i:p:q:rn:" opt; do
+while getopts "hast:u:i:p:q:rn:z:" opt; do
     case "$opt" in
         h)
             show_help
@@ -121,6 +129,13 @@ while getopts "hast:u:i:p:q:rn:" opt; do
         n)  aws=$OPTARG
             login
             curl -s --header "Authorization: Bearer $token" "$team_url/accounts/aws/$aws" | jq .
+            exit 1
+            ;;
+        z)
+            zonaruser=$OPTARG
+            login
+            get_session
+            curl -s --header "Authorization: Bearer $token" --header "Cookie: SESSION=$zonarkey" "$zonar_url/api/employees?username=$zonaruser" | jq .
             exit 1
             ;;
     esac
